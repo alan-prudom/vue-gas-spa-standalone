@@ -18,8 +18,10 @@ function doGet(e) {
 /**
  * Mock translation function
  * In a real app, this would use LanguageApp or a translation API.
+ * @param {Object} options {id, locale, context}
  */
-function performTranslation(id, targetLang, context) {
+function performTranslation(options) {
+  const { id, locale: targetLang, context } = options;
   // Simulated database
   const mockTasks = {
     "1": { title: "Draft Quarterly Report", description: "Collect data from all departments and summarize the progress on key objectives." },
@@ -36,11 +38,16 @@ function performTranslation(id, targetLang, context) {
 
   try {
     // Real translation using GAS internal service
+    const title = LanguageApp.translate(task.title, 'en', targetLang);
+    const description = LanguageApp.translate(task.description, 'en', targetLang);
+
+    // Ensure primtives
     return {
-      title: LanguageApp.translate(task.title, 'en', targetLang),
-      description: LanguageApp.translate(task.description, 'en', targetLang)
+      title: String(title),
+      description: String(description)
     };
   } catch (e) {
+    console.error('Translation Error for ID ' + id, e);
     // Fallback if quota exceeded during demo
     return {
       title: `[${targetLang}] ${task.title}`,
