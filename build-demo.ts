@@ -8,9 +8,15 @@ import * as ts from 'typescript';
 async function build() {
     const rootDir = path.resolve(__dirname);
     const buildDir = path.join(rootDir, 'dist');
-    const mainPackageDist = path.resolve(__dirname, '../../dist/TranslationManager.js');
 
-    console.log('[Build] Preparing demo build...');
+    // Path in monorepo
+    const monorepoLibDist = path.resolve(__dirname, '../../dist/TranslationManager.js');
+    // Path in standalone (vendored)
+    const standaloneLibDist = path.resolve(__dirname, 'vendor/TranslationManager.js');
+
+    const mainPackageDist = fs.existsSync(monorepoLibDist) ? monorepoLibDist : standaloneLibDist;
+
+    console.log(`[Build] Preparing demo build (using lib from: ${mainPackageDist})`);
 
     // 1. Clean and create build dir
     if (fs.existsSync(buildDir)) fs.removeSync(buildDir);
