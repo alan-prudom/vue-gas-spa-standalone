@@ -38,13 +38,13 @@ function performTranslation(options) {
 
   try {
     // Real translation using GAS internal service
-    const title = LanguageApp.translate(task.title, 'en', targetLang);
-    const description = LanguageApp.translate(task.description, 'en', targetLang);
+    const titleTranslated = LanguageApp.translate(task.title, 'en', targetLang);
+    const descriptionTranslated = LanguageApp.translate(task.description, 'en', targetLang);
 
-    // Ensure primtives
+    // Ensure primitives (not String objects) for safe serialization
     return {
-      title: String(title),
-      description: String(description)
+      title: `${titleTranslated}`,
+      description: `${descriptionTranslated}`
     };
   } catch (e) {
     console.error('Translation Error for ID ' + id, e);

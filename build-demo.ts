@@ -1,6 +1,6 @@
 import * as fs from 'fs-extra';
 import * as path from 'path';
-import * as ts from 'typescript';
+import * as esbuild from 'esbuild';
 
 /**
  * Build script for Vue + Bootstrap Demo
@@ -37,19 +37,30 @@ async function build() {
     let tmSource = fs.readFileSync(mainPackageDist, 'utf8');
     fs.writeFileSync(path.join(buildDir, 'TranslationManager.js.html'), `<script>\n${tmSource}\n</script>`);
 
-    // 4. Properly transpile Client.ts to JavaScript
-    console.log('[Build] Transpiling Client.ts...');
-    const clientSource = fs.readFileSync(path.join(rootDir, 'Client.ts'), 'utf8');
+    // 4. Bundle Client.ts with esbuild (handles imports properly)
+    console.log('[Build] Bundling Client.ts with esbuild...');
 
-    const transpiled = ts.transpileModule(clientSource, {
-        compilerOptions: {
-            module: ts.ModuleKind.None,
-            target: ts.ScriptTarget.ES5,
-            noEmitHelpers: false
-        }
+    const clientEntry = path.join(rootDir, 'Client.ts');
+    const clientOutput = path.join(buildDir, 'Client.temp.js');
+
+    await esbuild.build({
+        entryPoints: [clientEntry],
+        bundle: true,
+        outfile: clientOutput,
+        format: 'iife',
+        platform: 'browser',
+        target: 'es2015',
+        minify: false,
+        // External dependencies that are already loaded globally
+        external: []
     });
 
-    fs.writeFileSync(path.join(buildDir, 'Client.js.html'), `<script>\n${transpiled.outputText}\n</script>`);
+    // Read the bundled output and wrap in script tags
+    const clientJs = fs.readFileSync(clientOutput, 'utf8');
+    fs.writeFileSync(path.join(buildDir, 'Client.js.html'), `<script>\n${clientJs}\n</script>`);
+
+    // Clean up temp file
+    fs.removeSync(clientOutput);
 
     console.log('[Build] Build complete in ./dist');
 }

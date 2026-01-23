@@ -1,6 +1,9 @@
 /**
- * Vue + Bootstrap Demo: Client Logic
+ * Vue + Bootstrap Demo: Client Logic with Full I18n
  */
+
+// Import locale files
+import { locales, type LocaleCode } from './locales/index';
 
 // Since we are in a GAS environment, we assume TranslationManager is on the global scope
 const { TranslationManager } = (window as any).Shared.TranslationManager;
@@ -29,11 +32,14 @@ const app = createApp({
             'pl': 'Polish'
         };
 
+        // Reactive UI strings based on current locale
+        const ui = computed(() => locales[currentLocale.value]);
+
         const currentLocaleName = computed(() => localesMap[currentLocale.value]);
         const translatedCount = computed(() => tasks.value.filter(t => t.isTranslated).length);
         const pendingCount = computed(() => tasks.value.length - translatedCount.value);
 
-        // 1. Configure TranslationManager
+        // 1. Configure TranslationManager in HEADLESS MODE
         tm.configure({
             i18nService: {
                 getCurrentLocale: () => currentLocale.value,
@@ -41,15 +47,7 @@ const app = createApp({
             },
             gasTranslationFunction: 'performTranslation',
 
-            // We provide selectors so TM can prioritize viewable cards,
-            // even though we update the data model manually.
-            selectors: {
-                container: '[data-id="{id}"]',
-                title: '.card-title',
-                description: '.card-text'
-            },
-
-            // Callback to deliver results to Vue's reactive state
+            // Callback to deliver results to Vue's reactive state (HEADLESS MODE)
             onTranslationComplete: (id: string, result: any) => {
                 const task = tasks.value.find(t => t.id === id);
                 if (task) {
@@ -66,7 +64,7 @@ const app = createApp({
             }
         });
 
-        const setLanguage = (locale: string) => {
+        const setLanguage = (locale: LocaleCode) => {
             if (locale === 'en') {
                 // Return to original state
                 tasks.value = tasksInitial.map(t => ({ ...t }));
@@ -88,6 +86,7 @@ const app = createApp({
 
         return {
             tasks,
+            ui,
             currentLocaleName,
             translatedCount,
             pendingCount,
